@@ -13,6 +13,8 @@ PUSH = 0b01000101 # 69
 POP = 0b01000110 # 70
 CMP = 0b10100111 # 167
 JMP = 0b01010100 # 84
+JEQ = 0b01010101 # 85 # implement
+JNE = 0b01010110 # 86 # implement
 
 class CPU:
     """Main CPU class."""
@@ -22,7 +24,7 @@ class CPU:
         self.reg = [0] * 8 # example R0 - R7
         self.ram = [0] * 256 # list # 8 bits
         self.running = True
-        self.flag = 0b00
+        self.flag = 0
 
     def load(self, filename):
         """Load a program into memory."""
@@ -59,9 +61,13 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == CMP:
             if self.reg[reg_a] == self.reg[reg_b]:
-                self.flag += bin(1)
+                self.flag = 0b0000001
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.flag = 0b00000100
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010
             else:
-                self.flag += bin(0)
+                self.flag = 0
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -108,8 +114,8 @@ class CPU:
                 self.pc += 1
             elif cmd == MUL:
                 reg_location = self.ram_read(self.pc + 1)
-                reg_value = self.ram_read(self.pc + 2)
-                self.reg[reg_location] *= self.reg[reg_value]
+                reg_location2 = self.ram_read(self.pc + 2)
+                self.reg[reg_location] *= self.reg[reg_location2]
                 self.pc += 3
             elif cmd == PUSH:
                 # decrement stack pointer
@@ -139,10 +145,21 @@ class CPU:
                 self.pc += 2
             elif cmd == JMP:
                 reg_location = self.ram_read(self.pc + 1)
-                reg_value = self.ram_read(self.pc + 1)
-                self.reg[reg_location] = reg_value
+                self.pc = self.reg[reg_location]
+            elif cmd == CMP:
+                reg_location = self.ram_read(self.pc + 1)
+                reg_value = self.ram_read(self.pc + 2)
+                self.alu(CMP, reg_location, reg_value)
 
-                self.pc += 2
+                self.pc += 3
+            elif cmd == JEQ:
+                if self.flag == 0b01:
+                    reg_location = self.ram_read(self.pc + 1)
+                    self.pc = self.reg[reg_location]
+            elif cmd == JNE:
+                if self.flag == 0b00:
+                    reg_location = self.ram_read(self.pc + 1)
+                    self.pc = self.reg[reg_location]
             else:
                 print(f'No such {cmd} exists')
                 sys.exit(1)
