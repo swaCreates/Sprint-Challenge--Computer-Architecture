@@ -61,7 +61,7 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == CMP:
             if self.reg[reg_a] == self.reg[reg_b]:
-                self.flag = 0b0000001
+                self.flag = 0b00000001
             elif self.reg[reg_a] < self.reg[reg_b]:
                 self.flag = 0b00000100
             elif self.reg[reg_a] > self.reg[reg_b]:
@@ -94,7 +94,7 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
-        self.reg[7] = 0xF4 #stack pointer
+        self.reg[7] = 0xF4 # stack pointer
 
         while self.running: 
             cmd = self.ram[self.pc]
@@ -151,15 +151,19 @@ class CPU:
                 reg_value = self.ram_read(self.pc + 2)
                 self.alu(CMP, reg_location, reg_value)
 
-                self.pc += 3
+                self.pc += 2
             elif cmd == JEQ:
-                if self.flag == 0b01:
+                if self.flag == 0b00000001:
                     reg_location = self.ram_read(self.pc + 1)
                     self.pc = self.reg[reg_location]
+                else:
+                    self.pc += 2
             elif cmd == JNE:
-                if self.flag == 0b00:
+                if self.flag == 0:
                     reg_location = self.ram_read(self.pc + 1)
                     self.pc = self.reg[reg_location]
+                else:
+                    self.pc += 2
             else:
                 print(f'No such {cmd} exists')
                 sys.exit(1)
